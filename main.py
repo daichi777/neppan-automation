@@ -1,20 +1,27 @@
 # main.py
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import Optional, Dict, Any
+from neppan_login import create_reservation_in_neppan
+import logging  # 追加
+
+# ロガーの設定
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 app = FastAPI()
 
-# CORS settings (adjust for production)
+# CORS設定
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # In production, specify the allowed origins
+    allow_origins=["*"],  # 本番環境では適切なオリジンを指定
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
 
 # Define Pydantic models
 class MealPlan(BaseModel):
@@ -58,8 +65,12 @@ class Reservation(BaseModel):
     payment_method: str
 
 @app.post("/create_reservation")
-async def create_reservation(reservation: Reservation):
-    # Here you can process the reservation data
-    # For now, we'll just print it
-    print("Received reservation data:", reservation)
-    return {"status": "success", "message": "Reservation data received."}
+async def create_reservation(reservation: Reservation, background_tasks: BackgroundTasks):
+    # 予約データを受け取り、ログに出力
+    logger.info(f"Received reservation data: {reservation.dict()}")
+    
+    # NEPPANへの予約作成をバックグラウンドで実行
+    reservation_dict = reservation.dict()
+    background_tasks.add_task(create_reservation_in_neppan, reservation_dict)
+    
+    return {"status": "success", "message": "Reservation data received, logged, and NEPPAN processing started."}
