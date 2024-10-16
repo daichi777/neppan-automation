@@ -1,14 +1,16 @@
-# neppan_login.py
-
 import os
 import time
 import traceback
+import re
+import datetime
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait, Select
 from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.common.action_chains import ActionChains
+from selenium.webdriver.common.keys import Keys
 from selenium_stealth import stealth
 from dotenv import load_dotenv
 
@@ -92,7 +94,7 @@ def create_reservation_in_neppan(reservation_data):
         # iframeが読み込まれるのを待つ
         wait.until(EC.presence_of_element_located((By.CLASS_NAME, "cboxIframe")))
 
-        # iframeの一覧を出力
+        # iframeの一覧を取得
         iframes = driver.find_elements(By.TAG_NAME, 'iframe')
         print(f"見つかったiframeの数: {len(iframes)}")
         for index, iframe in enumerate(iframes):
@@ -121,6 +123,7 @@ def create_reservation_in_neppan(reservation_data):
         num_female = reservation_data["num_female"]
         num_child_with_bed = reservation_data["num_child_with_bed"]
         num_child_no_bed = reservation_data["num_child_no_bed"]
+        meal_plans = reservation_data.get("meal_plans", {})
 
         # 備考欄の作成
         notes = f"""・利用人数{total_guests}人
@@ -131,6 +134,16 @@ def create_reservation_in_neppan(reservation_data):
 """
         if special_requests:
             notes += f"\nその他の要望:\n{special_requests}"
+
+        # meal_plansの情報を備考欄に追加
+        if meal_plans:
+            notes += "\n\n食事プラン詳細:\n"
+            for plan_name, plan_details in meal_plans.items():
+                notes += f"\n{plan_name.upper()}　（{plan_details['count']}人）\n"
+                if 'menuSelections' in plan_details:
+                    for category, items in plan_details['menuSelections'].items():
+                        for item, count in items.items():
+                            notes += f"{item} {count}つ\n"
 
         # 予約情報を入力
         # 利用期間（チェックイン日）を入力
@@ -211,9 +224,7 @@ def create_reservation_in_neppan(reservation_data):
             print("「明細入力へ」ボタンがクリックされました。")
         except Exception as e:
             print(f"「明細入力へ」ボタンが見つからないか、クリックできませんでした。エラー: {str(e)}")
-            print("Current page source:")
-            print(driver.page_source)
-            driver.save_screenshot("error_screenshot_2.png")
+            save_debug_info(driver, "error_detail_button")
             driver.quit()
             return
 
@@ -224,56 +235,101 @@ def create_reservation_in_neppan(reservation_data):
         except Exception as e:
             print(f"明細入力画面への遷移に失敗しました。エラー: {str(e)}")
             print(f"Current URL: {driver.current_url}")
-            print("Current page source:")
-            print(driver.page_source)
-            driver.save_screenshot("error_screenshot_3.png")
+            save_debug_info(driver, "error_reservation_update")
             driver.quit()
             return
 
-        # iframeから抜ける（親フレームに戻る）
+        # フレームの切り替えが必要な場合はここで行う
         driver.switch_to.default_content()
         print("親フレームに戻りました。")
 
-        # 明細入力画面への遷移を待つ
+        # 明細入力画面の要素が表示されるのを待つ
         try:
-            wait.until(EC.presence_of_element_located((By.ID, "maintable")))
+            wait.until(EC.presence_of_element_located((By.ID, "input1")))
             print("明細入力画面に遷移しました。")
         except:
             print("明細入力画面への遷移に失敗しました。")
             print(f"Current URL: {driver.current_url}")
-            print("Current page source:")
-            print(driver.page_source)
-            driver.save_screenshot("error_screenshot_3.png")
+            save_debug_info(driver, "error_reservation_input")
             driver.quit()
             return
 
+        # 明細入力画面の初期化
+        actions = ActionChains(driver)
+
         # セレクトボックスが含まれるセルを見つける
-        cell = wait.until(EC.presence_of_element_located((By.XPATH, "//td[@name='col1_2_1']")))
+        cell = wait.until(EC.element_to_be_clickable((By.XPATH, "//td[@name='col1_2_1']")))
 
         # セルをクリックしてセレクトボックスを表示させる
-        driver.execute_script("arguments[0].click();", cell)
+        actions.move_to_element(cell).click().perform()
 
         # セレクトボックスが表示されるまで待つ
         select_element = wait.until(EC.visibility_of_element_located((By.ID, "selMeisaiKamoku1_1")))
 
         # JavaScriptを使用して直接値を設定（'102'は「1泊素泊まり」のvalue属性値）
         driver.execute_script("arguments[0].value = '102';", select_element)
-
-        # 値が変更されたことをトリガーするためにchangeイベントを発火
         driver.execute_script("arguments[0].dispatchEvent(new Event('change'));", select_element)
 
-        # 必要に応じて追加の明細を入力（コメントアウトしています）
-        add_detail_button = wait.until(EC.element_to_be_clickable((By.ID, "newbutton1")))
-        add_detail_button.click()
+        # 追加料理の明細を追加する関数を定義
+        def add_additional_meal(quantity):
+            # 新しい明細行を追加
+            add_detail_button = wait.until(EC.element_to_be_clickable((By.ID, "newbutton1")))
+            add_detail_button.click()
+            time.sleep(1)  # 行が追加されるのを待機
 
-        # 新しい行のセレクトボックスを操作
-        new_cell = wait.until(EC.presence_of_element_located((By.XPATH, "//td[@name='col1_2_2']")))
-        driver.execute_script("arguments[0].click();", new_cell)
+            # 新しい行のインデックスを取得
+            rows = driver.find_elements(By.XPATH, "//tr[contains(@class, 'index1_')]")
+            indices = []
+            for row in rows:
+                class_name = row.get_attribute("class")
+                match = re.search(r'index1_(\d+)', class_name)
+                if match:
+                    indices.append(int(match.group(1)))
+            new_index = max(indices)
 
-        new_select_element = wait.until(EC.visibility_of_element_located((By.ID, "selMeisaiKamoku1_2")))
-        driver.execute_script("arguments[0].value = '108';", new_select_element)  # '108'は「追加料理」のvalue属性値
-        driver.execute_script("arguments[0].dispatchEvent(new Event('change'));", new_select_element)
-        
+            # 科目セルをクリックして科目を選択
+            new_cell = wait.until(EC.element_to_be_clickable((By.XPATH, f"//td[@name='col1_2_{new_index}']")))
+            actions.move_to_element(new_cell).click().perform()
+
+            # 科目のセレクトボックスを操作
+            new_select_element = wait.until(EC.visibility_of_element_located((By.ID, f"selMeisaiKamoku1_{new_index}")))
+            driver.execute_script("arguments[0].value = '108';", new_select_element)  # '108'は「追加料理」のvalue属性値
+            driver.execute_script("arguments[0].dispatchEvent(new Event('change'));", new_select_element)
+
+            # 数量を設定
+            quantity_cell = wait.until(EC.element_to_be_clickable((By.XPATH, f"//td[@name='col1_5_{new_index}']")))
+            actions.move_to_element(quantity_cell).click().perform()
+            time.sleep(0.5)  # 入力フィールドが表示されるのを待機
+
+            # 数量入力フィールドが表示され、操作可能になるまで待機
+            quantity_input = wait.until(EC.element_to_be_clickable((By.ID, f"txtMeisaiCount1_{new_index}")))
+
+            # JavaScriptで値を直接設定
+            driver.execute_script("arguments[0].value = arguments[1];", quantity_input, str(quantity))
+            # 変更を反映させるためにイベントを発火
+            driver.execute_script("arguments[0].dispatchEvent(new Event('change'));", quantity_input)
+            driver.execute_script("arguments[0].dispatchEvent(new Event('blur'));", quantity_input)
+
+            print(f"追加料理の数量を {quantity} に設定しました。")
+
+        # meal_plansが空でない場合のみ追加料理を追加
+        if meal_plans:
+            plan_a_count = meal_plans.get('plan-a', {}).get('count', 0)
+            plan_b_count = meal_plans.get('plan-b', {}).get('count', 0)
+            plan_c_count = meal_plans.get('plan-c', {}).get('count', 0)
+
+            # Plan A と Plan B の合計数を入力
+            total_ab_count = plan_a_count + plan_b_count
+            if total_ab_count > 0:
+                add_additional_meal(total_ab_count)
+                print(f"追加料理（Plan A と Plan B）の数量を {total_ab_count} に設定しました。")
+
+            # Plan C の処理（必要なら）
+            if plan_c_count > 0:
+                add_additional_meal(plan_c_count)
+                print(f"追加料理（Plan C）の数量を {plan_c_count} に設定しました。")
+
+        # 予約登録ボタンをクリック
         register_button = wait.until(EC.element_to_be_clickable((By.ID, "btnReserveUpdate")))
         register_button.click()
 
@@ -303,7 +359,20 @@ def create_reservation_in_neppan(reservation_data):
     except Exception as e:
         print(f"エラーが発生しました: {str(e)}")
         traceback.print_exc()
-        driver.save_screenshot("error_screenshot.png")
+        save_debug_info(driver, "error_exception")
     finally:
         # ブラウザを閉じる
         driver.quit()
+
+def save_debug_info(driver, filename_prefix):
+    # タイムスタンプを取得
+    timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+    # スクリーンショットを保存
+    screenshot_filename = f"{filename_prefix}_screenshot_{timestamp}.png"
+    driver.save_screenshot(screenshot_filename)
+    print(f"スクリーンショットを保存しました: {screenshot_filename}")
+    # ページソースを保存
+    page_source_filename = f"{filename_prefix}_page_source_{timestamp}.html"
+    with open(page_source_filename, "w", encoding="utf-8") as f:
+        f.write(driver.page_source)
+    print(f"ページソースを保存しました: {page_source_filename}")
