@@ -124,14 +124,30 @@ def create_reservation_in_neppan(reservation_data):
         num_child_with_bed = reservation_data["num_child_with_bed"]
         num_child_no_bed = reservation_data["num_child_no_bed"]
         meal_plans = reservation_data.get("meal_plans", {})
+        past_stay = reservation_data.get("past_stay", False)
+        purpose = reservation_data.get("purpose", 'other')
 
         # 備考欄の作成
+        past_stay_text = '過去の宿泊あり' if past_stay else '過去の宿泊なし'
+
+        purpose_mapping = {
+            'travel': '旅行',
+            'anniversary': '記念日',
+            'birthday_adult': '誕生日(20歳以上)',
+            'birthday_minor': '誕生日(20歳以下)',
+            'other': 'その他'
+        }
+        purpose_text = purpose_mapping.get(purpose, 'その他')
+
         notes = f"""・利用人数{total_guests}人
 ・男性{num_male}人
 ・女性{num_female}人
 ・寝具あり子供{num_child_with_bed}人
 ・寝具なし子供{num_child_no_bed}人
+・{past_stay_text}
+・利用目的: {purpose_text}
 """
+
         if special_requests:
             notes += f"\nその他の要望:\n{special_requests}"
 
@@ -194,7 +210,9 @@ def create_reservation_in_neppan(reservation_data):
         wait.until(EC.presence_of_element_located((By.ID, "txtReserveName"))).send_keys(name)
 
         # 備考欄に情報を入力
-        wait.until(EC.presence_of_element_located((By.ID, "biko"))).send_keys(notes)
+        biko_input = wait.until(EC.presence_of_element_located((By.ID, "biko")))
+        biko_input.clear()
+        biko_input.send_keys(notes)
 
         # 予約登録ボタンをクリック
         register_button = wait.until(EC.element_to_be_clickable((By.XPATH, "//a[contains(@class, 'updatebutton') and text()='予約登録']")))
@@ -271,7 +289,7 @@ def create_reservation_in_neppan(reservation_data):
         driver.execute_script("arguments[0].dispatchEvent(new Event('change'));", select_element)
 
         # 追加料理の明細を追加する関数を定義
-        def add_additional_meal(quantity):
+        def add_additional_meal(quantity, unit_price):
             # 新しい明細行を追加
             add_detail_button = wait.until(EC.element_to_be_clickable((By.ID, "newbutton1")))
             add_detail_button.click()
@@ -304,13 +322,27 @@ def create_reservation_in_neppan(reservation_data):
             # 数量入力フィールドが表示され、操作可能になるまで待機
             quantity_input = wait.until(EC.element_to_be_clickable((By.ID, f"txtMeisaiCount1_{new_index}")))
 
-            # JavaScriptで値を直接設定
+            # JavaScriptで数量を設定
             driver.execute_script("arguments[0].value = arguments[1];", quantity_input, str(quantity))
             # 変更を反映させるためにイベントを発火
             driver.execute_script("arguments[0].dispatchEvent(new Event('change'));", quantity_input)
             driver.execute_script("arguments[0].dispatchEvent(new Event('blur'));", quantity_input)
 
-            print(f"追加料理の数量を {quantity} に設定しました。")
+            # 単価を設定
+            price_cell = wait.until(EC.element_to_be_clickable((By.XPATH, f"//td[@name='col1_6_{new_index}']")))
+            actions.move_to_element(price_cell).click().perform()
+            time.sleep(0.5)  # 入力フィールドが表示されるのを待機
+
+            # 単価入力フィールドが表示され、操作可能になるまで待機
+            price_input = wait.until(EC.element_to_be_clickable((By.ID, f"txtMeisaiPrice1_{new_index}")))
+
+            # JavaScriptで単価を設定
+            driver.execute_script("arguments[0].value = arguments[1];", price_input, str(unit_price))
+            # 変更を反映させるためにイベントを発火
+            driver.execute_script("arguments[0].dispatchEvent(new Event('change'));", price_input)
+            driver.execute_script("arguments[0].dispatchEvent(new Event('blur'));", price_input)
+
+            print(f"追加料理の数量を {quantity} 、単価を {unit_price} に設定しました。")
 
         # meal_plansが空でない場合のみ追加料理を追加
         if meal_plans:
@@ -321,13 +353,15 @@ def create_reservation_in_neppan(reservation_data):
             # Plan A と Plan B の合計数を入力
             total_ab_count = plan_a_count + plan_b_count
             if total_ab_count > 0:
-                add_additional_meal(total_ab_count)
-                print(f"追加料理（Plan A と Plan B）の数量を {total_ab_count} に設定しました。")
+                unit_price_ab = 6500  # Plan A と Plan B の単価
+                add_additional_meal(total_ab_count, unit_price_ab)
+                print(f"追加料理（Plan A と Plan B）の数量を {total_ab_count} 、単価を {unit_price_ab} に設定しました。")
 
             # Plan C の処理（必要なら）
             if plan_c_count > 0:
-                add_additional_meal(plan_c_count)
-                print(f"追加料理（Plan C）の数量を {plan_c_count} に設定しました。")
+                unit_price_c = 3000  # Plan C の単価
+                add_additional_meal(plan_c_count, unit_price_c)
+                print(f"追加料理（Plan C）の数量を {plan_c_count} 、単価を {unit_price_c} に設定しました。")
 
         # 予約登録ボタンをクリック
         register_button = wait.until(EC.element_to_be_clickable((By.ID, "btnReserveUpdate")))
