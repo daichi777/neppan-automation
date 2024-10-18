@@ -13,7 +13,7 @@ from selenium.webdriver.common.action_chains import ActionChains
 from selenium_stealth import stealth
 from dotenv import load_dotenv
 
-def send_keys_slowly(element, text, delay=0.05):
+def send_keys_slowly(element, text, delay=0.03):
     for char in text:
         element.send_keys(char)
         time.sleep(delay)
