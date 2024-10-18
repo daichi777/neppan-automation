@@ -129,6 +129,16 @@ def create_reservation_in_neppan(reservation_data):
         estimated_check_in_time = reservation_data.get("estimated_check_in_time")
         room_rate = reservation_data["room_rate"]  # 新しく追加
 
+        # 追加：顧客情報
+        postal_code = reservation_data.get("postal_code")
+        prefecture = reservation_data.get("prefecture") or ""
+        city_address = reservation_data.get("city_address") or ""
+        email = reservation_data.get("email")
+
+        # 郵便番号からハイフンを除去
+        if postal_code:
+            postal_code = postal_code.replace('-', '')
+
         # 備考欄の作成
         past_stay_text = '過去の宿泊あり' if past_stay else '過去の宿泊なし'
 
@@ -277,7 +287,7 @@ def create_reservation_in_neppan(reservation_data):
         # 明細入力画面の初期化
         actions = ActionChains(driver)
 
-         # チェックイン時刻を設定
+        # チェックイン時刻を設定
         if estimated_check_in_time:
             hour, minute = estimated_check_in_time.split(":")
             
@@ -292,7 +302,6 @@ def create_reservation_in_neppan(reservation_data):
             driver.execute_script("arguments[0].dispatchEvent(new Event('change'));", checkin_time2)
 
             print(f"チェックイン時刻を {estimated_check_in_time} に設定しました。")
-
 
         # セレクトボックスが含まれるセルを見つける
         cell = wait.until(EC.element_to_be_clickable((By.XPATH, "//td[@name='col1_2_1']")))
@@ -399,12 +408,62 @@ def create_reservation_in_neppan(reservation_data):
                 add_additional_meal(plan_c_count, unit_price_c)
                 print(f"追加料理（Plan C）の数量を {plan_c_count} 、単価を {unit_price_c} に設定しました。")
 
-                 # 変更理由入力
+        # 変更理由入力
         change_reason_input = wait.until(EC.presence_of_element_located((By.ID, "txtChangeMemo")))
         driver.execute_script("arguments[0].value = 'チェックイン時刻入力';", change_reason_input)
         driver.execute_script("arguments[0].dispatchEvent(new Event('change'));", change_reason_input)
 
         print("変更理由を入力しました。")
+
+        # 変更ボタンをクリックして顧客登録画面を表示
+        customer_update_button = wait.until(EC.element_to_be_clickable((By.ID, "customerUpdatebtn")))
+        customer_update_button.click()
+        print("「変更」ボタンがクリックされました。")
+
+        # 顧客登録画面のiframeが表示されるのを待つ
+        wait.until(EC.presence_of_element_located((By.CLASS_NAME, "cboxIframe")))
+
+        # 新しいiframeに切り替え
+        iframes = driver.find_elements(By.TAG_NAME, 'iframe')
+        driver.switch_to.frame(iframes[-1])
+        print("顧客登録画面のiframeに切り替えました。")
+
+        # 顧客登録フォームの要素が読み込まれるのを待つ
+        wait.until(EC.presence_of_element_located((By.NAME, "customerUpdateForm")))
+
+        # 郵便番号を入力
+        postal_code_input = wait.until(EC.presence_of_element_located((By.ID, "customer2_postno")))
+        postal_code_input.clear()
+        postal_code_input.send_keys(postal_code)
+
+        # 住所を入力（都道府県と市区町村を結合）
+        full_address = prefecture + city_address
+        address_input = wait.until(EC.presence_of_element_located((By.ID, "customer2_address")))
+        address_input.clear()
+        address_input.send_keys(full_address)
+
+        # メールアドレスを入力
+        email_input = wait.until(EC.presence_of_element_located((By.ID, "customer2_mail")))
+        email_input.clear()
+        email_input.send_keys(email)
+
+        # 「登録」ボタンをクリック
+        register_button = wait.until(EC.element_to_be_clickable((By.NAME, "btnDisplay")))
+        register_button.click()
+        print("顧客情報を登録しました。")
+
+        # アラートが表示されるのを待つ
+        wait.until(EC.alert_is_present())
+
+        # アラートを受け入れる
+        alert = driver.switch_to.alert
+        alert.accept()
+        print("アラートが受け入れられました。")
+
+        # 「閉じる」ボタンをクリック
+        close_button = wait.until(EC.element_to_be_clickable((By.NAME, "btnClose")))
+        close_button.click()
+        print("「閉じる」ボタンをクリックしました。")
 
         # 予約登録ボタンをクリック
         register_button = wait.until(EC.element_to_be_clickable((By.ID, "btnReserveUpdate")))
