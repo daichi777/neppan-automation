@@ -1,0 +1,510 @@
+<html xml:lang="ja" xmlns="http://www.w3.org/1999/xhtml" lang="ja"><head>
+<meta content="text/html; charset=utf-8" http-equiv="Content-Type">
+<title id="title">ねっぱん！ ｜ 管理サイト - トップページ - NEST琵琶湖　マキノ</title>
+<link rel="shortcut icon" href="./view/img/icon.ico">
+<link rel="stylesheet" href="/ea/view/js/jquery-ui-1.13.3/jquery-ui.min.css" type="text/css">
+<link rel="stylesheet" href="/ea/view/css/SpryMenuBarHorizontal.css" type="text/css">
+<link rel="stylesheet" href="/ea/view/css/drop_down_menu.css?version=20140207" type="text/css">
+<link rel="stylesheet" href="/ea/view/css/base.css?version=20150729" type="text/css">
+<link rel="stylesheet" href="/ea/view/css/text.css" type="text/css">
+<link rel="stylesheet" href="/ea/view/css/customerUpdate.css?version=20180228" type="text/css">
+
+<script type="text/javascript" language="JavaScript" src="/ea/view/js/jquery-3.7.1/jquery-3.7.1.min.js?version=20240628" xml:space="preserve"></script>
+<script type="text/javascript" language="JavaScript" src="/ea/view/js/jquery-3.7.1/regexJQuery.js?version=20240628" xml:space="preserve"></script>
+<script type="text/javascript" language="JavaScript" src="/ea/view/js/jquery-ui-1.13.3/jquery-ui.min.js?version=20240628" xml:space="preserve"></script>
+<script type="text/javascript" language="JavaScript" src="/ea/view/js/blockUI-2.70.0/jquery.blockUI.js?version=20240628" xml:space="preserve"></script>
+<script type="text/javascript" src="/ea/view/js/jquery.ui.touch-punch-0.23/jquery.ui.touch-punch.min.js"></script>
+
+<script type="text/javascript" language="JavaScript" src="/ea/view/js/click_menu.js?version=20150729" xml:space="preserve"></script>
+<script type="text/javascript" language="JavaScript" src="/ea/view/js/customerUpdate.js?version=20220415" xml:space="preserve"></script>
+
+
+<script type="text/javascript">
+
+// 初期表示
+function inz() {
+	var tab1 = "disabled";
+	var tab2 = "selected";
+	var tab3 = "";
+	var errorItemId = "customer2_postno";
+
+
+	if(tab1 == "selected") {
+		$('.customer1').css('display', '');			// 利用者を表示
+		$('.customer2').css('display', 'none');
+		$('.customer3').css('display', 'none');
+		$('.guestbtn').css('display', 'none');
+	}
+	if(tab2 == "selected") {
+		$('.customer1').css('display', 'none');	
+		$('.customer2').css('display', '');			// 予約者を表示
+		$('.customer3').css('display', 'none');
+		$('.guestbtn').css('display', 'none');
+	}
+	if(tab3 == "selected") {
+		$('.customer1').css('display', 'none');	
+		$('.customer2').css('display', 'none');			
+		$('.customer3').css('display', '');			// 宿泊者を表示
+		$('.guestbtn').css('display', '');
+	}
+
+	// エラー項目の背景色
+	if( errorItemId != "") {
+		if (document.getElementById(errorItemId).className == '') {
+			document.getElementById(errorItemId).className = "error_text";
+		}else{
+			document.getElementById(errorItemId).className = document.getElementById(errorItemId).className + " error_text";
+		}
+	}
+
+}
+
+</script>
+
+
+<!-- CSS -->
+
+
+
+
+</head>
+<body class="main_body" id="content" onload="inz();">
+
+
+	<div id="maintable2" style="width: 925px;">
+		<form name="customerUpdateForm" action="./customerUpdate.php" method="post" enctype="multipart/form-data">
+			<input type="hidden" id="token" name="token" value="b9c50a3bb56e32a45722e9fca827eb21">
+			<input type="hidden" name="customerUpdateForm:use_changeflg" id="use_changeflg" value="0">
+			<input type="hidden" name="customerUpdateForm:rsv_changeflg" id="rsv_changeflg" value="1">
+			<input type="hidden" name="customerUpdateForm:ges_changeflg" id="ges_changeflg" value="">
+
+			<input type="hidden" name="customerUpdateForm:use_renewDate" id="use_renewDate" value="">
+			<input type="hidden" name="customerUpdateForm:rsv_renewDate" id="rsv_renewDate" value="2024/10/18 10:16:29.414727">
+
+			<input type="hidden" name="customerUpdateForm:customerId1" id="customerId1" value="819">
+			<input type="hidden" name="customerUpdateForm:customerId2" id="customerId2" value="819">
+			<input type="hidden" name="customerUpdateForm:reserveId" id="reserveId" value="1818">
+			<input type="hidden" name="customerUpdateForm:pastReservation" id="pastReservation" value="0">
+			<input type="hidden" name="customerUpdateForm:mode" id="mode" value="31">
+			<input type="hidden" name="customerUpdateForm:entryCnt" id="entryCnt" value="0">
+			<input type="hidden" name="customerUpdateForm:update" id="update" value="">
+
+			<input type="hidden" name="customerUpdateForm:dispCustomerId1" id="dispCustomerId1" value="819">
+			<input type="hidden" name="customerUpdateForm:dispCustomerId2" id="dispCustomerId2" value="819">
+			<input type="hidden" name="customerUpdateForm:dispCustomerId3" id="dispCustomerId3" value="">
+			<input type="hidden" name="customerUpdateForm:dispCustomerType" id="dispCustomerType" value="0">
+
+			<input type="hidden" name="customerUpdateForm:dispTab1" id="dispTab1" value="">
+			<input type="hidden" name="customerUpdateForm:dispTab2" id="dispTab2" value="">
+			<input type="hidden" name="customerUpdateForm:dispTab3" id="dispTab3" value="">
+			<input type="hidden" name="customerUpdateForm:dispBtnSplit" id="dispBtnSplit" value="">
+			<input type="hidden" name="customerUpdateForm:dispBtnIntegration" id="dispBtnIntegration" value="">
+
+			<table class="main_input" style="overflow-x: hidden;">
+				<tbody><tr>
+					<td class="td_title" colspan="6" style="width:880px;">
+						顧客登録
+					</td>
+				</tr>
+				<tr>
+					<td class="" colspan="6" style="padding:5px;width:880px;">
+						<div>
+						<ul class="tabrow">
+							<li id="customerTab" name="customerTab1" class="disabled" title="利用者を表示します。">利用者</li>
+							<li id="customerTab" name="customerTab2" class="selected" title="予約者を表示します。">予約者</li>
+																			<a name="btnSplit" class="updatebutton" href="" value="" style="width:150px;float: right;margin-right: 5px; display:;" title="利用者を入力します。">利用者を入力する</a>
+							<a name="btnIntegration" class="updatebutton" href="" value="" style="width:250px;float: right;margin-right: 5px; display:none;" title="利用者を予約者と同じにします。">利用者を予約者と同じにする</a>
+												</ul>
+						<div class="tabrow_border" style="height: 479px;">
+						<table class="main_input">
+							<tbody><tr class="customer1" style="display: none;">
+																<td class="td_sub_title">
+									<div style="text-align: left;float: left;">顧客番号</div>
+								</td>
+								<td colspan="2" id="customer1_Id">
+									819
+								</td>
+								<td colspan="4">
+								</td>
+															</tr>
+							<tr class="customer1" style="display: none;">
+								<td class="td_sub_title" style="width:150px;">
+									<div style="text-align: left;float: left;">カナ</div><div style="text-align: right;font-size: 12px;color: #ff0000;">※必須&nbsp;</div>
+								</td>
+								<td colspan="2" style="width:260px;">
+									<input type="text" style="width:250px;text-align: left;" name="customerUpdateForm:customer1_kana" id="customer1_kana" value="" title="カナを入力して下さい。">
+									<input type="hidden" name="customerUpdateForm:customer1_hid_kana" id="customer1_hid_kana" value="">
+								</td>
+								<td class="td_sub_title" style="width:150px;">
+									<div style="text-align: left;float: left;">氏名</div>
+								</td>
+								<td colspan="3" style="width:260px;">
+									<input type="text" style="width:250px;text-align: left;" name="customerUpdateForm:customer1_name" id="customer1_name" value="" title="氏名を入力して下さい。">
+									<input type="hidden" name="customerUpdateForm:customer1_hid_name" id="customer1_hid_name" value="">
+								</td>
+							</tr>
+							<tr class="customer1" style="display: none;">
+								<td class="td_sub_title">
+									<div style="text-align: left;float: left;">電話番号1</div><div style="text-align: right;font-size: 12px;color: #ff0000;">※必須&nbsp;</div>
+								</td>
+								<td colspan="2">
+									<input type="text" style="width:250px;text-align: left;" name="customerUpdateForm:customer1_tel" id="customer1_tel" value="" title="電話番号を入力して下さい。">
+									<input type="hidden" name="customerUpdateForm:customer1_hid_tel" id="customer1_hid_tel" value="">
+								</td>
+								<td class="td_sub_title">
+									<div style="text-align: left;float: left;">電話番号2</div>
+								</td>
+								<td colspan="3">
+									<input type="text" style="width:250px;text-align: left;" name="customerUpdateForm:customer1_mobiletel" id="customer1_mobiletel" value="" title="電話番号を入力して下さい。">
+									<input type="hidden" name="customerUpdateForm:customer1_hid_mobiletel" id="customer1_hid_mobiletel" value="">
+								</td>
+							</tr>
+							<tr class="customer1" style="display: none;">
+								<td class="td_sub_title">
+									<div style="text-align: left;float: left;">郵便番号</div>
+								</td>
+								<td colspan="2">
+									<input type="text" style="width:250px;text-align: left;" name="customerUpdateForm:customer1_postno" id="customer1_postno" value="" title="郵便番号を入力して下さい。">
+									<input type="hidden" name="customerUpdateForm:customer1_hid_postno" id="customer1_hid_postno" value="">
+								</td>
+								<td class="td_sub_title">
+									<div style="text-align: left;float: left;">メールアドレス</div>
+								</td>
+								<td colspan="3">
+									<input type="text" style="width:250px;text-align: left;" name="customerUpdateForm:customer1_mail" id="customer1_mail" value="" title="メールアドレスを入力して下さい。">
+									<input type="hidden" name="customerUpdateForm:customer1_hid_mail" id="customer1_hid_mail" value="">
+								</td>
+							</tr>
+							<tr class="customer1" style="display: none;">
+								<td class="td_sub_title">
+									<div style="text-align: left;float: left;">住所</div>
+								</td>
+								<td colspan="6">
+									<input type="text" style="width:645px;text-align: left;" name="customerUpdateForm:customer1_address" id="customer1_address" value="" title="住所を入力して下さい。">
+									<input type="hidden" name="customerUpdateForm:customer1_hid_address" id="customer1_hid_address" value="">
+								</td>
+							</tr>
+							<tr class="customer1" style="display: none;">
+								<td class="td_sub_title">
+									<div style="text-align: left;float: left;">メモ欄</div>
+								</td>
+								<td colspan="6">
+									<input type="text" style="width:645px;text-align: left;" name="customerUpdateForm:customer1_memo" id="customer1_memo" value="" title="メモ欄を入力して下さい。">
+									<input type="hidden" name="customerUpdateForm:customer1_hid_memo" id="customer1_hid_memo" value="">
+								</td>
+							</tr>
+														<tr class="customer1" style="display: none;">
+								<td class="td_sub_title">
+									<div style="text-align: left;float: left;">年代</div>
+								</td>
+								<td colspan="2">
+									<input type="text" style="width:250px;text-align: left;" name="customerUpdateForm:customer1_free_1" id="customer1_free_1" value="" title="年代を入力して下さい。">
+									<input type="hidden" name="customerUpdateForm:customer1_hid_free_1" id="customer1_hid_free_1" value="">
+								</td>
+																<td class="td_sub_title">
+									<div style="text-align: left;float: left;">客層</div>
+								</td>
+								<td colspan="3">
+									<input type="text" style="width:250px;text-align: left;" name="customerUpdateForm:customer1_free_2" id="customer1_free_2" value="" title="客層を入力して下さい。">
+									<input type="hidden" name="customerUpdateForm:customer1_hid_free_2" id="customer1_hid_free_2" value="">
+								</td>
+															</tr>
+														<tr class="customer1" style="display: none;">
+								<td class="td_sub_title">
+									<div style="text-align: left;float: left;margin-right: 4px;">過去累計室泊数</div>
+									<img id="salesSiteIcon" src="./view/img/icon_question.png" style="vertical-align:middle;" title="イージー会計で利用履歴データがない過去に宿泊した累計の室泊数を入力して下さい。
+※部屋割り表や顧客検索画面などでは、累計室泊数と合算された数値が表示されます。">
+								</td>
+								<td colspan="2">
+									<span class="ui-spinner ui-corner-all ui-widget ui-widget-content"><input type="text" class="txtboxNumericSS ui-spinner-input" name="customerUpdateForm:customer1_pastUseCount" id="customer1_pastUseCount" value="0" title="過去累計室泊数を入力して下さい。" aria-valuemin="0" aria-valuemax="999" aria-valuenow="0" autocomplete="off" role="spinbutton"><a tabindex="-1" aria-hidden="true" class="ui-button ui-widget ui-spinner-button ui-spinner-up ui-corner-tr" role="button"></a><a tabindex="-1" aria-hidden="true" class="ui-button ui-widget ui-spinner-button ui-spinner-down ui-corner-br" role="button"></a></span> 回
+									<input type="hidden" name="customerUpdateForm:customer1_hid_pastUseCount" id="customer1_hid_pastUseCount" value="0">
+								</td>
+								<td colspan="4">
+								</td>
+							</tr>
+														<tr class="customer1" style="display: none;">
+								<td class="td_sub_title">
+									<div style="text-align: left;float: left;">最終利用日</div>
+								</td>
+								<td colspan="2" id="customer1_lastUseDate">
+									
+								</td>
+								<td class="td_sub_title">
+									<div style="text-align: left;float: left;">累計室泊数</div>
+								</td>
+								<td colspan="2" style="text-align:right" id="customer1_useCount">
+									回
+								</td>
+								<td colspan="1" style="width:150px;">
+								</td>
+							</tr>
+							<tr class="customer1" style="display: none;">
+								<td class="td_sub_title">
+									<div style="text-align: left;float: left;">最終利用日(予約)</div>
+								</td>
+								<td colspan="2" id="customer1_lastRsvDate">
+									
+								</td>
+								<td class="td_sub_title">
+									<div style="text-align: left;float: left;">紹介室泊数</div>
+								</td>
+								<td colspan="2" style="text-align:right" id="customer1_rsvCount">
+									回
+								</td>
+								<td colspan="1" style="width:150px;">
+								</td>
+							</tr>
+							<tr class="customer1" style="display: none;">
+								<td class="td_sub_title">
+									<div style="text-align: left;float: left;">履歴</div>
+								</td>
+								<td colspan="6" class="td_span" style="padding:5px;">
+									<table class="sub_table" style="border-bottom:none;">
+										<tbody><tr class="" id="c1" style="">
+											<td class="td_sub_title" style="width:100px;">
+												イン日
+											</td>
+											<td class="td_sub_title" style="width:30px;text-align:right;">
+												泊数
+											</td>
+											<td class="td_sub_title" style="width:30px;text-align:right;">
+												部屋
+											</td>
+											<td class="td_sub_title" style="width:30px;text-align:right;">
+												人数
+											</td>
+											<td class="td_sub_title" style="width:240px;">
+												プラン
+											</td>
+											<td class="td_sub_title" style="width:80px;text-align:right;">
+												単価
+											</td>
+											<td class="td_sub_title" style="width:30px;">
+												利用
+											</td>
+											<td class="td_sub_title" style="width:30px;">
+												予約
+											</td>
+										</tr>
+									</tbody></table>
+									<div id="sub_scroll">
+										<table class="sub_table" id="histTable1">
+											
+										</table>
+									</div>
+								</td>
+							</tr>
+							
+														<tr class="customer2" style="">
+								<td class="td_sub_title">
+									<div style="text-align: left;float: left;">顧客番号</div>
+								</td>
+								<td colspan="2" id="customer2_Id">
+									819
+								</td>
+								<td colspan="4">
+								</td>
+							</tr>
+							<tr class="customer2" style="">
+								<td class="td_sub_title" style="width:150px;">
+									<div style="text-align: left;float: left;">カナ</div><div style="text-align: right;font-size: 12px;color: #ff0000;">※必須&nbsp;</div>
+								</td>
+								<td colspan="2" style="width:260px;">
+									<input type="text" style="width:250px;text-align: left;" name="customerUpdateForm:customer2_kana" id="customer2_kana" value="ナカタ　ダイチ" title="カナを入力して下さい。">
+									<input type="hidden" name="customerUpdateForm:customer2_hid_kana" id="customer2_hid_kana" value="ナカタ　ダイチ">
+								</td>
+								<td class="td_sub_title" style="width:150px;">
+									<div style="text-align: left;float: left;">氏名</div>
+								</td>
+								<td colspan="3" style="width:260px;">
+									<input type="text" style="width:250px;text-align: left;" name="customerUpdateForm:customer2_name" id="customer2_name" value="ナカタ ダイチ" title="氏名を入力して下さい。">
+									<input type="hidden" name="customerUpdateForm:customer2_hid_name" id="customer2_hid_name" value="ナカタ ダイチ">
+								</td>
+							</tr>
+							<tr class="customer2" style="">
+								<td class="td_sub_title">
+									<div style="text-align: left;float: left;">電話番号1</div><div style="text-align: right;font-size: 12px;color: #ff0000;">※必須&nbsp;</div>
+								</td>
+								<td colspan="2">
+									<input type="text" style="width:250px;text-align: left;" name="customerUpdateForm:customer2_tel" id="customer2_tel" value="09092867380" title="電話番号を入力して下さい。">
+									<input type="hidden" name="customerUpdateForm:customer2_hid_tel" id="customer2_hid_tel" value="09092867380">
+								</td>
+								<td class="td_sub_title">
+									<div style="text-align: left;float: left;">電話番号2</div>
+								</td>
+								<td colspan="3">
+									<input type="text" style="width:250px;text-align: left;" name="customerUpdateForm:customer2_mobiletel" id="customer2_mobiletel" value="" title="電話番号を入力して下さい。">
+									<input type="hidden" name="customerUpdateForm:customer2_hid_mobiletel" id="customer2_hid_mobiletel" value="">
+								</td>
+							</tr>
+							<tr class="customer2" style="">
+								<td class="td_sub_title">
+									<div style="text-align: left;float: left;">郵便番号</div>
+								</td>
+								<td colspan="2">
+									<input type="text" style="width:250px;text-align: left;" name="customerUpdateForm:customer2_postno" id="customer2_postno" value="578-0975" title="郵便番号を入力して下さい。" class="error_text">
+									<input type="hidden" name="customerUpdateForm:customer2_hid_postno" id="customer2_hid_postno" value="">
+								</td>
+								<td class="td_sub_title">
+									<div style="text-align: left;float: left;">メールアドレス</div>
+								</td>
+								<td colspan="3">
+									<input type="text" style="width:250px;text-align: left;" name="customerUpdateForm:customer2_mail" id="customer2_mail" value="a.d.j07071355@gmail.com" title="メールアドレスを入力して下さい。">
+									<input type="hidden" name="customerUpdateForm:customer2_hid_mail" id="customer2_hid_mail" value="">
+								</td>
+							</tr>
+							<tr class="customer2" style="">
+								<td class="td_sub_title">
+									<div style="text-align: left;float: left;">住所</div>
+								</td>
+								<td colspan="6">
+									<input type="text" style="width:645px;text-align: left;" name="customerUpdateForm:customer2_address" id="customer2_address" value="3-6-5-104" title="住所を入力して下さい。">
+									<input type="hidden" name="customerUpdateForm:customer2_hid_address" id="customer2_hid_address" value="">
+								</td>
+							</tr>
+							<tr class="customer2" style="">
+								<td class="td_sub_title">
+									<div style="text-align: left;float: left;">メモ欄</div>
+								</td>
+								<td colspan="6">
+									<input type="text" style="width:645px;text-align: left;" name="customerUpdateForm:customer2_memo" id="customer2_memo" value="" title="メモ欄を入力して下さい。">
+									<input type="hidden" name="customerUpdateForm:customer2_hid_memo" id="customer2_hid_memo" value="">
+								</td>
+							</tr>
+														<tr class="customer2" style="">
+								<td class="td_sub_title">
+									<div style="text-align: left;float: left;">年代</div>
+								</td>
+								<td colspan="2">
+									<input type="text" style="width:250px;text-align: left;" name="customerUpdateForm:customer2_free_1" id="customer2_free_1" value="" title="年代を入力して下さい。">
+									<input type="hidden" name="customerUpdateForm:customer2_hid_free_1" id="customer2_hid_free_1" value="">
+								</td>
+																<td class="td_sub_title">
+									<div style="text-align: left;float: left;">客層</div>
+								</td>
+								<td colspan="3">
+									<input type="text" style="width:250px;text-align: left;" name="customerUpdateForm:customer2_free_2" id="customer2_free_2" value="" title="客層を入力して下さい。">
+									<input type="hidden" name="customerUpdateForm:customer2_hid_free_2" id="customer2_hid_free_2" value="">
+								</td>
+															</tr>
+							
+							<tr class="customer2" style="">
+								<td class="td_sub_title">
+									<div style="text-align: left;float: left;">過去累計室泊数</div>
+									&nbsp;<img id="salesSiteIcon" src="./view/img/icon_question.png" style="vertical-align:middle;" title="顧客をリピーターとして登録する場合は1以上を入力して下さい。
+※部屋割り表や顧客検索画面などでは、累計室泊数と合算された数値が表示されます。">
+								</td>
+								<td colspan="2">
+									<span class="ui-spinner ui-corner-all ui-widget ui-widget-content"><input type="text" class="txtboxNumericSS ui-spinner-input" name="customerUpdateForm:customer2_pastUseCount" id="customer2_pastUseCount" value="0" title="過去累計室泊数を入力して下さい。" aria-valuemin="0" aria-valuemax="999" aria-valuenow="0" autocomplete="off" role="spinbutton"><a tabindex="-1" aria-hidden="true" class="ui-button ui-widget ui-spinner-button ui-spinner-up ui-corner-tr" role="button"></a><a tabindex="-1" aria-hidden="true" class="ui-button ui-widget ui-spinner-button ui-spinner-down ui-corner-br" role="button"></a></span> 回
+									<input type="hidden" name="customerUpdateForm:customer2_hid_pastUseCount" id="customer2_hid_pastUseCount" value="0">
+								</td>
+								<td colspan="4">
+								</td>
+							</tr>
+
+							<tr class="customer2" style="">
+								<td class="td_sub_title">
+									<div style="text-align: left;float: left;">最終利用日</div>
+								</td>
+								<td colspan="2" id="customer2_lastUseDate">
+									
+								</td>
+								<td class="td_sub_title">
+									<div style="text-align: left;float: left;">累計室泊数</div>
+								</td>
+								<td colspan="2" style="text-align:right" id="customer2_useCount">
+									0回
+								</td>
+								<td colspan="1" style="width:150px;">
+								</td>
+							</tr>
+							<tr class="customer2" style="">
+								<td class="td_sub_title">
+									<div style="text-align: left;float: left;">最終利用日(予約)</div>
+								</td>
+								<td colspan="2" id="customer2_lastRsvDate">
+									
+								</td>
+								<td class="td_sub_title">
+									<div style="text-align: left;float: left;">紹介室泊数</div>
+								</td>
+								<td colspan="2" style="text-align:right" id="customer2_rsvCount">
+									0回
+								</td>
+								<td colspan="1" style="width:150px;">
+								</td>
+							</tr>
+							<tr class="customer2" style="">
+								<td class="td_sub_title">
+									<div style="text-align: left;float: left;">履歴</div>
+								</td>
+								<td colspan="6" class="td_span" style="padding:5px;">
+									<table class="sub_table" style="border-bottom:none;">
+										<tbody><tr class="" id="c1" style="">
+											<td class="td_sub_title" style="width:100px;">
+												イン日
+											</td>
+											<td class="td_sub_title" style="width:30px;text-align:right;">
+												泊数
+											</td>
+											<td class="td_sub_title" style="width:30px;text-align:right;">
+												部屋
+											</td>
+											<td class="td_sub_title" style="width:30px;text-align:right;">
+												人数
+											</td>
+											<td class="td_sub_title" style="width:240px;">
+												プラン
+											</td>
+											<td class="td_sub_title" style="width:80px;text-align:right;">
+												単価
+											</td>
+											<td class="td_sub_title" style="width:30px;">
+												利用
+											</td>
+											<td class="td_sub_title" style="width:30px;">
+												予約
+											</td>
+										</tr>
+									</tbody></table>
+									<div id="sub_scroll">
+										<table class="sub_table" id="histTable2">
+											
+										</table>
+									</div>
+								</td>
+							</tr>
+													</tbody></table>
+						<input type="hidden" name="customerUpdateForm:defaultInnerHeight" id="defaultInnerHeight" value="479">
+												</div>
+					</div>
+					</td>
+				</tr>
+			</tbody></table>
+
+
+			<ul id="allMessages">
+				<li>
+					<span class="rb14">予約者の郵便番号は、半角数字で入力して下さい。</span>
+				</li>
+			</ul>
+
+			<div id="inputtable" style="text-align:center;">
+							<span style="margin-left:20px;"></span>
+				<a name="btnDisplay" class="updatebutton" href="#" value="" title="入力した顧客情報を登録します。">登録</a>
+							<span style="margin-left:20px;"></span>
+				<a name="btnClose" class="closebutton" href="#" value="" title="この画面を閉じます。">閉じる</a>
+			</div>
+		</form>
+
+		<form name="customerUpdateHistoryForm" action="./reservationUpdate.php" target="_blank" method="post">
+			<input id="history_id" name="id" value="" type="hidden">
+			<input id="history_mode" name="mode" value="1" type="hidden">
+			<input id="token" name="token" value="b9c50a3bb56e32a45722e9fca827eb21" type="hidden">
+		</form>
+
+	</div>
+
+
+
+</body></html>

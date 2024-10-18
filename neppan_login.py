@@ -126,6 +126,8 @@ def create_reservation_in_neppan(reservation_data):
         meal_plans = reservation_data.get("meal_plans", {})
         past_stay = reservation_data.get("past_stay", False)
         purpose = reservation_data.get("purpose", 'other')
+        estimated_check_in_time = reservation_data.get("estimated_check_in_time")
+        room_rate = reservation_data["room_rate"]  # 新しく追加
 
         # 備考欄の作成
         past_stay_text = '過去の宿泊あり' if past_stay else '過去の宿泊なし'
@@ -275,6 +277,23 @@ def create_reservation_in_neppan(reservation_data):
         # 明細入力画面の初期化
         actions = ActionChains(driver)
 
+         # チェックイン時刻を設定
+        if estimated_check_in_time:
+            hour, minute = estimated_check_in_time.split(":")
+            
+            # 時間を設定
+            checkin_time1 = wait.until(EC.presence_of_element_located((By.ID, "txtCheckinTime1")))
+            driver.execute_script("arguments[0].value = arguments[1];", checkin_time1, hour)
+            driver.execute_script("arguments[0].dispatchEvent(new Event('change'));", checkin_time1)
+
+            # 分を設定
+            checkin_time2 = wait.until(EC.presence_of_element_located((By.ID, "txtCheckinTime2")))
+            driver.execute_script("arguments[0].value = arguments[1];", checkin_time2, minute)
+            driver.execute_script("arguments[0].dispatchEvent(new Event('change'));", checkin_time2)
+
+            print(f"チェックイン時刻を {estimated_check_in_time} に設定しました。")
+
+
         # セレクトボックスが含まれるセルを見つける
         cell = wait.until(EC.element_to_be_clickable((By.XPATH, "//td[@name='col1_2_1']")))
 
@@ -287,6 +306,23 @@ def create_reservation_in_neppan(reservation_data):
         # JavaScriptを使用して直接値を設定（'102'は「1泊素泊まり」のvalue属性値）
         driver.execute_script("arguments[0].value = '102';", select_element)
         driver.execute_script("arguments[0].dispatchEvent(new Event('change'));", select_element)
+
+        # 1泊素泊まりの単価（room_rate）を設定
+        room_rate = reservation_data['room_rate']
+        price_cell = wait.until(EC.element_to_be_clickable((By.XPATH, "//td[@name='col1_6_1']")))
+        actions.move_to_element(price_cell).click().perform()
+        time.sleep(0.5)  # 入力フィールドが表示されるのを待機
+
+        # 単価入力フィールドが表示され、操作可能になるまで待機
+        price_input = wait.until(EC.element_to_be_clickable((By.ID, "txtMeisaiPrice1_1")))
+
+        # JavaScriptで単価を設定
+        driver.execute_script("arguments[0].value = arguments[1];", price_input, str(room_rate))
+        # 変更を反映させるためにイベントを発火
+        driver.execute_script("arguments[0].dispatchEvent(new Event('change'));", price_input)
+        driver.execute_script("arguments[0].dispatchEvent(new Event('blur'));", price_input)
+
+        print(f"1泊素泊まりの単価を {room_rate} に設定しました。")
 
         # 追加料理の明細を追加する関数を定義
         def add_additional_meal(quantity, unit_price):
@@ -362,6 +398,13 @@ def create_reservation_in_neppan(reservation_data):
                 unit_price_c = 3000  # Plan C の単価
                 add_additional_meal(plan_c_count, unit_price_c)
                 print(f"追加料理（Plan C）の数量を {plan_c_count} 、単価を {unit_price_c} に設定しました。")
+
+                 # 変更理由入力
+        change_reason_input = wait.until(EC.presence_of_element_located((By.ID, "txtChangeMemo")))
+        driver.execute_script("arguments[0].value = 'チェックイン時刻入力';", change_reason_input)
+        driver.execute_script("arguments[0].dispatchEvent(new Event('change'));", change_reason_input)
+
+        print("変更理由を入力しました。")
 
         # 予約登録ボタンをクリック
         register_button = wait.until(EC.element_to_be_clickable((By.ID, "btnReserveUpdate")))
