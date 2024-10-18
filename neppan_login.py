@@ -10,9 +10,13 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait, Select
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.action_chains import ActionChains
-from selenium.webdriver.common.keys import Keys
 from selenium_stealth import stealth
 from dotenv import load_dotenv
+
+def send_keys_slowly(element, text, delay=0.05):
+    for char in text:
+        element.send_keys(char)
+        time.sleep(delay)
 
 def create_reservation_in_neppan(reservation_data):
     # 環境変数をロード
@@ -61,11 +65,12 @@ def create_reservation_in_neppan(reservation_data):
         driver.get('https://www38.neppan.net/login.php')
 
         # フォーム要素の取得と入力
-        wait.until(EC.presence_of_element_located((By.NAME, "loginForm:clientCode"))).send_keys(KEIYAKU_CODE)
-        wait.until(EC.presence_of_element_located((By.NAME, "loginForm:loginId"))).send_keys(USER_ID)
-        wait.until(EC.presence_of_element_located((By.NAME, "loginForm:password"))).send_keys(PASSWORD)
+        send_keys_slowly(wait.until(EC.presence_of_element_located((By.NAME, "loginForm:clientCode"))), KEIYAKU_CODE)
+        send_keys_slowly(wait.until(EC.presence_of_element_located((By.NAME, "loginForm:loginId"))), USER_ID)
+        send_keys_slowly(wait.until(EC.presence_of_element_located((By.NAME, "loginForm:password"))), PASSWORD)
 
         # ログインボタンのクリック
+        time.sleep(0.5)
         wait.until(EC.element_to_be_clickable((By.ID, "LoginBtn"))).click()
 
         # ページ遷移の待機
@@ -89,6 +94,7 @@ def create_reservation_in_neppan(reservation_data):
 
         # 新規予約ボタンを見つけてクリック
         new_reservation_button = wait.until(EC.element_to_be_clickable((By.CLASS_NAME, "newReservebutton")))
+        time.sleep(0.5)
         new_reservation_button.click()
 
         # iframeが読み込まれるのを待つ
@@ -177,12 +183,12 @@ def create_reservation_in_neppan(reservation_data):
         # 利用期間（チェックイン日）を入力
         checkin_input = wait.until(EC.presence_of_element_located((By.ID, "txtCheckInDateSub")))
         checkin_input.clear()
-        checkin_input.send_keys(check_in_date)
+        send_keys_slowly(checkin_input, check_in_date)
 
         # 泊数を入力
         nights_input = wait.until(EC.presence_of_element_located((By.ID, "txtHakuNum")))
         nights_input.clear()
-        nights_input.send_keys(str(num_nights))
+        send_keys_slowly(nights_input, str(num_nights))
 
         # 部屋タイプを選択
         room_type_select = Select(wait.until(EC.presence_of_element_located((By.ID, "roomType"))))
@@ -196,16 +202,16 @@ def create_reservation_in_neppan(reservation_data):
         # 部屋数を入力
         room_count_input = wait.until(EC.presence_of_element_located((By.ID, "txtRoomNum")))
         room_count_input.clear()
-        room_count_input.send_keys(str(num_units))
+        send_keys_slowly(room_count_input, str(num_units))
 
         # 人数を入力
         adult_input = wait.until(EC.presence_of_element_located((By.ID, "txtAdultNum")))
         adult_input.clear()
-        adult_input.send_keys(str(adult_count))
+        send_keys_slowly(adult_input, str(adult_count))
 
         child_input = wait.until(EC.presence_of_element_located((By.ID, "txtChildNum")))
         child_input.clear()
-        child_input.send_keys(str(child_count))
+        send_keys_slowly(child_input, str(child_count))
 
         # プランを選択
         plan_select = Select(wait.until(EC.presence_of_element_located((By.ID, "accountSubject"))))
@@ -217,17 +223,18 @@ def create_reservation_in_neppan(reservation_data):
             print(f"エラー: プラン '{plan}' が見つかりません。")
 
         # 予約者情報を入力
-        wait.until(EC.presence_of_element_located((By.ID, "txtReserveTel"))).send_keys(phone)
-        wait.until(EC.presence_of_element_located((By.ID, "txtReserveKana"))).send_keys(name_kana)
-        wait.until(EC.presence_of_element_located((By.ID, "txtReserveName"))).send_keys(name)
+        send_keys_slowly(wait.until(EC.presence_of_element_located((By.ID, "txtReserveTel"))), phone)
+        send_keys_slowly(wait.until(EC.presence_of_element_located((By.ID, "txtReserveKana"))), name_kana)
+        send_keys_slowly(wait.until(EC.presence_of_element_located((By.ID, "txtReserveName"))), name)
 
         # 備考欄に情報を入力
         biko_input = wait.until(EC.presence_of_element_located((By.ID, "biko")))
         biko_input.clear()
-        biko_input.send_keys(notes)
+        send_keys_slowly(biko_input, notes)
 
         # 予約登録ボタンをクリック
         register_button = wait.until(EC.element_to_be_clickable((By.XPATH, "//a[contains(@class, 'updatebutton') and text()='予約登録']")))
+        time.sleep(0.5)
         register_button.click()
 
         print("予約登録ボタンがクリックされました。")
@@ -250,6 +257,7 @@ def create_reservation_in_neppan(reservation_data):
                 EC.element_to_be_clickable((By.XPATH, "//a[contains(@class, 'updatebutton') and text()='明細入力へ']"))
             )
             print("「明細入力へ」ボタンが見つかりました。")
+            time.sleep(0.5)
             detail_button.click()
             print("「明細入力へ」ボタンがクリックされました。")
         except Exception as e:
@@ -417,6 +425,7 @@ def create_reservation_in_neppan(reservation_data):
 
         # 変更ボタンをクリックして顧客登録画面を表示
         customer_update_button = wait.until(EC.element_to_be_clickable((By.ID, "customerUpdatebtn")))
+        time.sleep(0.5)
         customer_update_button.click()
         print("「変更」ボタンがクリックされました。")
 
@@ -434,21 +443,22 @@ def create_reservation_in_neppan(reservation_data):
         # 郵便番号を入力
         postal_code_input = wait.until(EC.presence_of_element_located((By.ID, "customer2_postno")))
         postal_code_input.clear()
-        postal_code_input.send_keys(postal_code)
+        send_keys_slowly(postal_code_input, postal_code)
 
         # 住所を入力（都道府県と市区町村を結合）
         full_address = prefecture + city_address
         address_input = wait.until(EC.presence_of_element_located((By.ID, "customer2_address")))
         address_input.clear()
-        address_input.send_keys(full_address)
+        send_keys_slowly(address_input, full_address)
 
         # メールアドレスを入力
         email_input = wait.until(EC.presence_of_element_located((By.ID, "customer2_mail")))
         email_input.clear()
-        email_input.send_keys(email)
+        send_keys_slowly(email_input, email)
 
         # 「登録」ボタンをクリック
         register_button = wait.until(EC.element_to_be_clickable((By.NAME, "btnDisplay")))
+        time.sleep(0.5)
         register_button.click()
         print("顧客情報を登録しました。")
 
@@ -462,13 +472,18 @@ def create_reservation_in_neppan(reservation_data):
 
         # 「閉じる」ボタンをクリック
         close_button = wait.until(EC.element_to_be_clickable((By.NAME, "btnClose")))
+        time.sleep(0.5)
         close_button.click()
         print("「閉じる」ボタンをクリックしました。")
 
+        # フレームの切り替え
+        driver.switch_to.default_content()
+        print("デフォルトコンテキストに戻りました。")
+
         # 予約登録ボタンをクリック
         register_button = wait.until(EC.element_to_be_clickable((By.ID, "btnReserveUpdate")))
+        time.sleep(0.5)
         register_button.click()
-
         print("予約登録ボタンがクリックされました。")
 
         # アラートが表示される可能性があるため、待機して処理
@@ -482,15 +497,6 @@ def create_reservation_in_neppan(reservation_data):
 
         # 明示的な待機を追加
         time.sleep(5)
-
-        # トップページに直接遷移
-        driver.get('https://www38.neppan.net/ea/eaTop.php')
-
-        # トップページの読み込みを待機
-        wait.until(EC.presence_of_element_located((By.CLASS_NAME, "display_header_title")))
-
-        print("予約が正常に登録され、トップページに戻りました。")
-        print(f"Current URL: {driver.current_url}")
 
     except Exception as e:
         print(f"エラーが発生しました: {str(e)}")
