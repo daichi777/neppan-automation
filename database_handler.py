@@ -1,6 +1,7 @@
 import psycopg2
 from psycopg2 import sql
 from config import DATABASE_URL
+import json
 
 def connect_to_db():
     return psycopg2.connect(DATABASE_URL)
@@ -15,15 +16,15 @@ def insert_reservation(conn, reservation):
                 num_child_with_bed, num_child_no_bed, estimated_check_in_time,
                 purpose, special_requests, transportation_method, room_rate,
                 total_guests, guests_with_meals, total_meal_price, total_amount,
-                reservation_status
+                reservation_status, room_rates  -- ここを追加
             ) VALUES (
                 %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
-                %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
+                %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s  -- %s を追加
             )
             ON CONFLICT (reservation_number) DO NOTHING
             RETURNING id
         """)
-        
+
         cur.execute(query, (
             reservation['reservation_number'],
             reservation['name'],
@@ -52,9 +53,10 @@ def insert_reservation(conn, reservation):
             reservation['guests_with_meals'],
             reservation['total_meal_price'],
             reservation['total_amount'],
-            reservation['reservation_status']
+            reservation['reservation_status'],
+            json.dumps(reservation.get('room_rates', []))   # ここを修正
         ))
-        
+
         result = cur.fetchone()
         conn.commit()
         return result[0] if result else None
@@ -67,7 +69,7 @@ def update_reservation_status(conn, reservation_number, new_status):
             WHERE reservation_number = %s
             RETURNING id
         """)
-        
+
         cur.execute(query, (new_status, reservation_number))
         result = cur.fetchone()
         conn.commit()

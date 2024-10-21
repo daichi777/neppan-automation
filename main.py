@@ -13,6 +13,7 @@ from database_handler import connect_to_db, insert_reservation, update_reservati
 import sys
 import io
 from config import EMAIL_HOST, EMAIL_PORT, EMAIL_USER, EMAIL_PASS
+from typing import List, Dict
 
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
 sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8')
@@ -36,6 +37,10 @@ app.add_middleware(
 class MealPlan(BaseModel):
     count: int
     menuSelections: Optional[Dict[str, Dict[str, int]]] = None
+
+class RoomRate(BaseModel):
+    date: str
+    price: float
 
 class Reservation(BaseModel):
     reservation_number: str
@@ -62,6 +67,7 @@ class Reservation(BaseModel):
     special_requests: Optional[str] = None
     transportation_method: str
     room_rate: float
+    room_rates: List[RoomRate]  # この行を追加
     meal_plans: Dict[str, Any]
     total_guests: int
     guests_with_meals: int

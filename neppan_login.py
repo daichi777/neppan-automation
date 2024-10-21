@@ -3,6 +3,7 @@ import time
 import traceback
 import re
 import datetime
+import json  # 追加
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.chrome.service import Service
@@ -32,7 +33,7 @@ def create_reservation_in_neppan(reservation_data):
         print("環境変数が正しく設定されていません。")
         return
 
-   # ChromeDriverのパスを指定
+    # ChromeDriverのパスを指定
     driver_path = 'C:\\Users\\OWNER\\Desktop\\neppan_automation\\chromedriver.exe'
 
     # Chromeオプションの設定
@@ -133,7 +134,11 @@ def create_reservation_in_neppan(reservation_data):
         past_stay = reservation_data.get("past_stay", False)
         purpose = reservation_data.get("purpose", 'other')
         estimated_check_in_time = reservation_data.get("estimated_check_in_time")
-        room_rate = reservation_data["room_rate"]  # 新しく追加
+        # room_ratesを取得
+        room_rates = reservation_data.get("room_rates", [])  # 新しい行  # [{"date": "2025-01-04", "price": 128000}, ...]
+        # 新しく追加: total_amountとpayment_amountを取得
+        total_amount = reservation_data["total_amount"]
+        payment_amount = reservation_data["payment_amount"]
 
         # 追加：顧客情報
         postal_code = reservation_data.get("postal_code")
@@ -171,20 +176,20 @@ def create_reservation_in_neppan(reservation_data):
 
         # meal_plansの情報を備考欄に追加
         if meal_plans:
-                notes += "\n\n食事プラン詳細:\n"
-                for date, plans in meal_plans.items():
-                    notes += f"\n■ {date}\n"
-                    for plan_name, plan_details in plans.items():
-                        notes += f"  {plan_name.upper()}　（{plan_details['count']}人）\n"
-                        notes += f"    価格: {plan_details['price']}円\n"
-                        if 'menuSelections' in plan_details and plan_details['menuSelections']:
-                            notes += "    メニュー選択:\n"
-                            for category, items in plan_details['menuSelections'].items():
-                                notes += f"      {category}:\n"
-                                for item, count in items.items():
-                                    notes += f"        - {item}: {count}つ\n"
-                        else:
-                            notes += "    メニュー選択: なし\n"
+            notes += "\n\n食事プラン詳細:\n"
+            for date, plans in meal_plans.items():
+                notes += f"\n■ {date}\n"
+                for plan_name, plan_details in plans.items():
+                    notes += f"  {plan_name.upper()}　（{plan_details['count']}人）\n"
+                    notes += f"    価格: {plan_details['price']}円\n"
+                    if 'menuSelections' in plan_details and plan_details['menuSelections']:
+                        notes += "    メニュー選択:\n"
+                        for category, items in plan_details['menuSelections'].items():
+                            notes += f"      {category}:\n"
+                            for item, count in items.items():
+                                notes += f"        - {item}: {count}つ\n"
+                    else:
+                        notes += "    メニュー選択: なし\n"
 
         # 予約情報を入力
         # 利用期間（チェックイン日）を入力
@@ -195,7 +200,6 @@ def create_reservation_in_neppan(reservation_data):
         driver.execute_script("arguments[0].value = arguments[1];", checkin_input, check_in_date)
         # 変更イベントを発火させて、ページが値の変更を検知できるようにする
         driver.execute_script("arguments[0].dispatchEvent(new Event('change'));", checkin_input)
-
 
         # 泊数を入力
         nights_input = wait.until(EC.presence_of_element_located((By.ID, "txtHakuNum")))
@@ -323,35 +327,68 @@ def create_reservation_in_neppan(reservation_data):
 
             print(f"チェックイン時刻を {estimated_check_in_time} に設定しました。")
 
-        # セレクトボックスが含まれるセルを見つける
-        cell = wait.until(EC.element_to_be_clickable((By.XPATH, "//td[@name='col1_2_1']")))
+        # 1泊素泊まりの明細を追加する関数を定義
+        def add_room_charge_line(quantity, unit_price, is_first_line=False):
+            if is_first_line:
+                index = 1
+            else:
+                # 新しい明細行を追加
+                add_detail_button = wait.until(EC.element_to_be_clickable((By.ID, "newbutton1")))
+                add_detail_button.click()
+                time.sleep(1)  # 行が追加されるのを待機
 
-        # セルをクリックしてセレクトボックスを表示させる
-        actions.move_to_element(cell).click().perform()
+                # 新しい行のインデックスを取得
+                rows = driver.find_elements(By.XPATH, "//tr[contains(@class, 'index1_')]")
+                indices = []
+                for row in rows:
+                    class_name = row.get_attribute("class")
+                    match = re.search(r'index1_(\d+)', class_name)
+                    if match:
+                        indices.append(int(match.group(1)))
+                index = max(indices)
 
-        # セレクトボックスが表示されるまで待つ
-        select_element = wait.until(EC.visibility_of_element_located((By.ID, "selMeisaiKamoku1_1")))
+            # 科目セルをクリックして科目を選択
+            cell = wait.until(EC.element_to_be_clickable((By.XPATH, f"//td[@name='col1_2_{index}']")))
+            actions.move_to_element(cell).click().perform()
 
-        # JavaScriptを使用して直接値を設定（'102'は「1泊素泊まり」のvalue属性値）
-        driver.execute_script("arguments[0].value = '102';", select_element)
-        driver.execute_script("arguments[0].dispatchEvent(new Event('change'));", select_element)
+            # 科目のセレクトボックスを操作
+            select_element = wait.until(EC.visibility_of_element_located((By.ID, f"selMeisaiKamoku1_{index}")))
+            # '102' は「1泊素泊まり」のvalue属性値
+            driver.execute_script("arguments[0].value = '102';", select_element)
+            driver.execute_script("arguments[0].dispatchEvent(new Event('change'));", select_element)
 
-        # 1泊素泊まりの単価（room_rate）を設定
-        room_rate = reservation_data['room_rate']
-        price_cell = wait.until(EC.element_to_be_clickable((By.XPATH, "//td[@name='col1_6_1']")))
-        actions.move_to_element(price_cell).click().perform()
-        time.sleep(0.5)  # 入力フィールドが表示されるのを待機
+            # 数量を設定
+            quantity_cell = wait.until(EC.element_to_be_clickable((By.XPATH, f"//td[@name='col1_5_{index}']")))
+            actions.move_to_element(quantity_cell).click().perform()
+            time.sleep(0.5)
 
-        # 単価入力フィールドが表示され、操作可能になるまで待機
-        price_input = wait.until(EC.element_to_be_clickable((By.ID, "txtMeisaiPrice1_1")))
+            quantity_input = wait.until(EC.element_to_be_clickable((By.ID, f"txtMeisaiCount1_{index}")))
 
-        # JavaScriptで単価を設定
-        driver.execute_script("arguments[0].value = arguments[1];", price_input, str(room_rate))
-        # 変更を反映させるためにイベントを発火
-        driver.execute_script("arguments[0].dispatchEvent(new Event('change'));", price_input)
-        driver.execute_script("arguments[0].dispatchEvent(new Event('blur'));", price_input)
+            driver.execute_script("arguments[0].value = arguments[1];", quantity_input, str(quantity))
+            driver.execute_script("arguments[0].dispatchEvent(new Event('change'));", quantity_input)
+            driver.execute_script("arguments[0].dispatchEvent(new Event('blur'));", quantity_input)
 
-        print(f"1泊素泊まりの単価を {room_rate} に設定しました。")
+            # 単価を設定
+            price_cell = wait.until(EC.element_to_be_clickable((By.XPATH, f"//td[@name='col1_6_{index}']")))
+            actions.move_to_element(price_cell).click().perform()
+            time.sleep(0.5)
+
+            price_input = wait.until(EC.element_to_be_clickable((By.ID, f"txtMeisaiPrice1_{index}")))
+
+            driver.execute_script("arguments[0].value = arguments[1];", price_input, str(unit_price))
+            driver.execute_script("arguments[0].dispatchEvent(new Event('change'));", price_input)
+            driver.execute_script("arguments[0].dispatchEvent(new Event('blur'));", price_input)
+
+            print(f"1泊素泊まりを設定しました。行: {index}, 数量: {quantity}, 単価: {unit_price}円")
+
+        # 1泊素泊まりの明細を追加
+        for idx, room_rate_info in enumerate(room_rates):
+            date = room_rate_info['date']
+            unit_price = room_rate_info['price']
+            quantity = num_units  # num_units が数量
+
+            is_first_line = (idx == 0)
+            add_room_charge_line(quantity, unit_price, is_first_line)
 
         # 追加料理の明細を追加する関数を定義
         def add_additional_meal(quantity, unit_price):
@@ -409,6 +446,77 @@ def create_reservation_in_neppan(reservation_data):
 
             print(f"追加料理の数量を {quantity} 、単価を {unit_price} に設定しました。")
 
+        # クーポン割引の明細を追加する関数を定義
+        def add_coupon_discount(discount_amount):
+            # 新しい明細行を追加
+            add_detail_button = wait.until(EC.element_to_be_clickable((By.ID, "newbutton1")))
+            add_detail_button.click()
+            time.sleep(1)  # 行が追加されるのを待機
+
+            # 新しい行のインデックスを取得
+            rows = driver.find_elements(By.XPATH, "//tr[contains(@class, 'index1_')]")
+            indices = []
+            for row in rows:
+                class_name = row.get_attribute("class")
+                match = re.search(r'index1_(\d+)', class_name)
+                if match:
+                    indices.append(int(match.group(1)))
+            new_index = max(indices)
+
+            # 科目セルをクリックして科目を選択
+            new_cell = wait.until(EC.element_to_be_clickable((By.XPATH, f"//td[@name='col1_2_{new_index}']")))
+            actions.move_to_element(new_cell).click().perform()
+
+            # 科目のセレクトボックスを操作
+            new_select_element = wait.until(EC.visibility_of_element_located((By.ID, f"selMeisaiKamoku1_{new_index}")))
+
+            # "クーポン割引" の value 属性を取得
+            options = new_select_element.find_elements(By.TAG_NAME, "option")
+            coupon_discount_value = None
+            for option in options:
+                if option.text.strip() == "クーポン割引":
+                    coupon_discount_value = option.get_attribute("value")
+                    break
+
+            if coupon_discount_value is None:
+                print("エラー: 'クーポン割引' の科目が見つかりません。")
+                return
+
+            # 科目を "クーポン割引" に設定
+            driver.execute_script("arguments[0].value = arguments[1];", new_select_element, coupon_discount_value)
+            driver.execute_script("arguments[0].dispatchEvent(new Event('change'));", new_select_element)
+
+            # 数量を設定（1とします）
+            quantity = 1
+            quantity_cell = wait.until(EC.element_to_be_clickable((By.XPATH, f"//td[@name='col1_5_{new_index}']")))
+            actions.move_to_element(quantity_cell).click().perform()
+            time.sleep(0.5)  # 入力フィールドが表示されるのを待機
+
+            # 数量入力フィールドが表示され、操作可能になるまで待機
+            quantity_input = wait.until(EC.element_to_be_clickable((By.ID, f"txtMeisaiCount1_{new_index}")))
+
+            # JavaScriptで数量を設定
+            driver.execute_script("arguments[0].value = arguments[1];", quantity_input, str(quantity))
+            # 変更を反映させるためにイベントを発火
+            driver.execute_script("arguments[0].dispatchEvent(new Event('change'));", quantity_input)
+            driver.execute_script("arguments[0].dispatchEvent(new Event('blur'));", quantity_input)
+
+            # 単価を設定（割引額を負の値で設定）
+            price_cell = wait.until(EC.element_to_be_clickable((By.XPATH, f"//td[@name='col1_6_{new_index}']")))
+            actions.move_to_element(price_cell).click().perform()
+            time.sleep(0.5)  # 入力フィールドが表示されるのを待機
+
+            # 単価入力フィールドが表示され、操作可能になるまで待機
+            price_input = wait.until(EC.element_to_be_clickable((By.ID, f"txtMeisaiPrice1_{new_index}")))
+
+            # JavaScriptで単価を設定
+            driver.execute_script("arguments[0].value = arguments[1];", price_input, str(discount_amount))
+            # 変更を反映させるためにイベントを発火
+            driver.execute_script("arguments[0].dispatchEvent(new Event('change'));", price_input)
+            driver.execute_script("arguments[0].dispatchEvent(new Event('blur'));", price_input)
+
+            print(f"クーポン割引を適用しました。金額: {discount_amount}円")
+
         # meal_plansが空でない場合のみ追加料理を追加
         if meal_plans:
             for date, plans in meal_plans.items():
@@ -417,12 +525,16 @@ def create_reservation_in_neppan(reservation_data):
                     price = plan_details['price']
                     unit_price = price // count  # 1人あたりの単価を計算
 
-                    if plan_name.lower() in ['plan-a', 'plan-b']:
+                    if plan_name.lower() in ['plan-a', 'plan-b', 'plan-c']:
                         add_additional_meal(count, unit_price)
                         print(f"{date} の {plan_name} ({count}人分) を追加しました。単価: {unit_price}円")
-                    elif plan_name.lower() == 'plan-c':
-                        add_additional_meal(count, unit_price)
-                        print(f"{date} の {plan_name} ({count}人分) を追加しました。単価: {unit_price}円")
+
+        # total_amountとpayment_amountが一致しない場合、クーポン割引を適用
+        if total_amount != payment_amount:
+            discount_amount = total_amount - payment_amount
+            negative_discount_amount = -discount_amount
+            add_coupon_discount(negative_discount_amount)
+            print(f"クーポン割引を追加しました。割引額: {negative_discount_amount}円")
 
         # 変更理由入力
         change_reason_input = wait.until(EC.presence_of_element_located((By.ID, "txtChangeMemo")))
