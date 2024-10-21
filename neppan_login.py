@@ -32,7 +32,7 @@ def create_reservation_in_neppan(reservation_data):
         print("環境変数が正しく設定されていません。")
         return
 
-    # ChromeDriverのパスを指定
+   # ChromeDriverのパスを指定
     driver_path = 'C:\\Users\\OWNER\\Desktop\\neppan_automation\\chromedriver.exe'
 
     # Chromeオプションの設定
@@ -171,19 +171,31 @@ def create_reservation_in_neppan(reservation_data):
 
         # meal_plansの情報を備考欄に追加
         if meal_plans:
-            notes += "\n\n食事プラン詳細:\n"
-            for plan_name, plan_details in meal_plans.items():
-                notes += f"\n{plan_name.upper()}　（{plan_details['count']}人）\n"
-                if 'menuSelections' in plan_details:
-                    for category, items in plan_details['menuSelections'].items():
-                        for item, count in items.items():
-                            notes += f"{item} {count}つ\n"
+                notes += "\n\n食事プラン詳細:\n"
+                for date, plans in meal_plans.items():
+                    notes += f"\n■ {date}\n"
+                    for plan_name, plan_details in plans.items():
+                        notes += f"  {plan_name.upper()}　（{plan_details['count']}人）\n"
+                        notes += f"    価格: {plan_details['price']}円\n"
+                        if 'menuSelections' in plan_details and plan_details['menuSelections']:
+                            notes += "    メニュー選択:\n"
+                            for category, items in plan_details['menuSelections'].items():
+                                notes += f"      {category}:\n"
+                                for item, count in items.items():
+                                    notes += f"        - {item}: {count}つ\n"
+                        else:
+                            notes += "    メニュー選択: なし\n"
 
         # 予約情報を入力
         # 利用期間（チェックイン日）を入力
         checkin_input = wait.until(EC.presence_of_element_located((By.ID, "txtCheckInDateSub")))
         checkin_input.clear()
-        send_keys_slowly(checkin_input, check_in_date)
+
+        # JavaScriptを使用して値を設定
+        driver.execute_script("arguments[0].value = arguments[1];", checkin_input, check_in_date)
+        # 変更イベントを発火させて、ページが値の変更を検知できるようにする
+        driver.execute_script("arguments[0].dispatchEvent(new Event('change'));", checkin_input)
+
 
         # 泊数を入力
         nights_input = wait.until(EC.presence_of_element_located((By.ID, "txtHakuNum")))
@@ -399,22 +411,18 @@ def create_reservation_in_neppan(reservation_data):
 
         # meal_plansが空でない場合のみ追加料理を追加
         if meal_plans:
-            plan_a_count = meal_plans.get('plan-a', {}).get('count', 0)
-            plan_b_count = meal_plans.get('plan-b', {}).get('count', 0)
-            plan_c_count = meal_plans.get('plan-c', {}).get('count', 0)
+            for date, plans in meal_plans.items():
+                for plan_name, plan_details in plans.items():
+                    count = plan_details['count']
+                    price = plan_details['price']
+                    unit_price = price // count  # 1人あたりの単価を計算
 
-            # Plan A と Plan B の合計数を入力
-            total_ab_count = plan_a_count + plan_b_count
-            if total_ab_count > 0:
-                unit_price_ab = 6500  # Plan A と Plan B の単価
-                add_additional_meal(total_ab_count, unit_price_ab)
-                print(f"追加料理（Plan A と Plan B）の数量を {total_ab_count} 、単価を {unit_price_ab} に設定しました。")
-
-            # Plan C の処理（必要なら）
-            if plan_c_count > 0:
-                unit_price_c = 3000  # Plan C の単価
-                add_additional_meal(plan_c_count, unit_price_c)
-                print(f"追加料理（Plan C）の数量を {plan_c_count} 、単価を {unit_price_c} に設定しました。")
+                    if plan_name.lower() in ['plan-a', 'plan-b']:
+                        add_additional_meal(count, unit_price)
+                        print(f"{date} の {plan_name} ({count}人分) を追加しました。単価: {unit_price}円")
+                    elif plan_name.lower() == 'plan-c':
+                        add_additional_meal(count, unit_price)
+                        print(f"{date} の {plan_name} ({count}人分) を追加しました。単価: {unit_price}円")
 
         # 変更理由入力
         change_reason_input = wait.until(EC.presence_of_element_located((By.ID, "txtChangeMemo")))
